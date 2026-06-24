@@ -37,10 +37,11 @@ jobs:
         run: npm run build
         working-directory: functions
 
-      # Step 5: Deploy to your Firebase project using the updated secret key
+      # Step 5: Deploy using your stable Service Account Key with mapped credentials
       - name: Deploy to Firebase
         uses: w9jds/firebase-action@v15.22.0
         with:
           args: deploy --only functions
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HOUSE_PROJ_FFF2A }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HOUSE_PROJ_FFF2A }}
