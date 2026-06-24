@@ -34,7 +34,7 @@ jobs:
 
       # Step 5: Deploy to your Firebase project using the GitHub Token secret
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v2.6.0
+        uses: w9jds/firebase-action@v15.22.0
         with:
           args: deploy --only functions
         env:
