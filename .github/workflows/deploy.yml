@@ -37,11 +37,11 @@ jobs:
         run: npm run build
         working-directory: functions
 
-      # Step 5: Deploy using your stable Service Account Key with mapped credentials
+      # Step 5: Native Deployment using your verified Repository Secret
       - name: Deploy to Firebase
-        uses: w9jds/firebase-action@v15.22.0
-        with:
-          args: deploy --only functions
-        env:
-          GCP_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HOUSE_PROJ_FFF2A }}
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_HOUSE_PROJ_FFF2A }}
+        run: |
+          # 1. Install official Firebase tools cleanly on the runner
+          npm install -g firebase-tools
+          
+          # 2. Deploy directly utilizing the verified token string
+          firebase deploy --only functions --token "${{ secrets.FIREBASE_TOKEN }}" --project house-proj-fff2a
