@@ -1,0 +1,28 @@
+[debug] [2026-06-24T20:01:12.911Z] ----------------------------------------------------------------------
+[debug] [2026-06-24T20:01:12.915Z] Command:       /usr/local/nvm/versions/node/v24.16.0/bin/node /usr/local/node_packages/node_modules/.bin/firebase login:ci
+[debug] [2026-06-24T20:01:12.916Z] CLI Version:   15.20.0
+[debug] [2026-06-24T20:01:12.916Z] Platform:      linux
+[debug] [2026-06-24T20:01:12.916Z] Node Version:  v24.16.0
+[debug] [2026-06-24T20:01:12.917Z] Time:          Wed Jun 24 2026 20:01:12 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-06-24T20:01:12.917Z] ----------------------------------------------------------------------
+[debug] 
+[warn] ⚠  Authenticating with a `login:ci` token is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://accounts.google.com/o/oauth2/auth?client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com&scope=email%20openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffirebase%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&response_type=code&state=807808021&redirect_uri=http%3A%2F%2Flocalhost%3A9005
+[info] 
+[info] Waiting for authentication...
+[debug] [2026-06-24T20:03:20.958Z] ----------------------------------------------------------------------
+[debug] [2026-06-24T20:03:20.960Z] Command:       /usr/local/nvm/versions/node/v24.16.0/bin/node /usr/local/node_packages/node_modules/.bin/firebase login:ci
+[debug] [2026-06-24T20:03:20.960Z] CLI Version:   15.20.0
+[debug] [2026-06-24T20:03:20.961Z] Platform:      linux
+[debug] [2026-06-24T20:03:20.961Z] Node Version:  v24.16.0
+[debug] [2026-06-24T20:03:20.961Z] Time:          Wed Jun 24 2026 20:03:20 GMT+0000 (Coordinated Universal Time)
+[debug] [2026-06-24T20:03:20.961Z] ----------------------------------------------------------------------
+[debug] 
+[warn] ⚠  Authenticating with a `login:ci` token is deprecated and will be removed in a future major version of `firebase-tools`. Instead, use a service account key with `GOOGLE_APPLICATION_CREDENTIALS`: https://cloud.google.com/docs/authentication/getting-started 
+[info] 
+[info] Visit this URL on this device to log in:
+[info] https://accounts.google.com/o/oauth2/auth?client_id=563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com&scope=email%20openid%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloudplatformprojects.readonly%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Ffirebase%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcloud-platform&response_type=code&state=832574201&redirect_uri=http%3A%2F%2Flocalhost%3A9006
+[info] 
+[info] Waiting for authentication...

@@ -1,0 +1,41 @@
+name: Deploy to Firebase Functions
+
+on:
+  push:
+    branches:
+      - main # Triggers the pipeline whenever you push code to the main branch
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out your code from GitHub onto the Ubuntu runner
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      # Step 2: Set up the Node.js environment
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20 # Matches modern Firebase environment
+          cache: 'npm'
+          cache-dependency-path: functions/package-lock.json
+
+      # Step 3: Install backend dependencies
+      - name: Install Dependencies
+        run: npm ci
+        working-directory: functions
+
+      # Step 4: Compile TypeScript to JavaScript
+      - name: Build TypeScript
+        run: npm run build
+        working-directory: functions
+
+      # Step 5: Deploy to your Firebase project using the GitHub Token secret
+      - name: Deploy to Firebase
+        uses: w9jds/firebase-action@v2.6.0
+        with:
+          args: deploy --only functions
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
