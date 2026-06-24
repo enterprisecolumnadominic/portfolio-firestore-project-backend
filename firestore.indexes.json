@@ -1,0 +1,204 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "ContentPosts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsActive",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "PublishedDate",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Employees",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsActive",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "DateCreated",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "PropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "DateCreated",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "PropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "SubPropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "DateCreated",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "PropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "SubPropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "SubPropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "DateCreated",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "Properties",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "IsEnabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "SubPropertyType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "Name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    }
+  ],
+  "fieldOverrides": []
+}
