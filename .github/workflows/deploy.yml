@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out your code from GitHub onto the Ubuntu runner
+      # Step 1: Check out your code
       - name: Checkout Repo
         uses: actions/checkout@v4
 
@@ -22,7 +22,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: './functions/package-lock.json'
 
-      # Step 3: Install backend dependencies with fallback support
+      # Step 3: Install backend dependencies
       - name: Install Dependencies
         run: |
           if [ -f package-lock.json ]; then
