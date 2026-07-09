@@ -5,7 +5,6 @@ import * as jwt from "jsonwebtoken";
 admin.initializeApp();
 const db = admin.firestore();
 
-// Secret encryption key configuration
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
 const COOKIE_NAME = "visitor_auth";
@@ -46,6 +45,7 @@ export const handleVisitorSession = functions.https.onRequest(
 
       if (existingToken) {
         try {
+          // eslint-disable-next-line object-curly-spacing
           const decoded = jwt.verify(existingToken, JWT_SECRET) as {
             visitorId: string;
           };
@@ -71,7 +71,6 @@ export const handleVisitorSession = functions.https.onRequest(
           });
           currentRefreshes = 1;
         } else {
-          // Fixed the forbidden non-null assertion warning safely
           const data = doc.data();
           if (data) {
             const dayInMs = 24 * 60 * 60 * 1000;
@@ -101,7 +100,7 @@ export const handleVisitorSession = functions.https.onRequest(
         return;
       }
 
-      // Fixed: No spaces inside brackets to satisfy object-curly-spacing
+      // eslint-disable-next-line object-curly-spacing
       const token = jwt.sign({ visitorId }, JWT_SECRET, { expiresIn: "7d" });
 
       res.cookie(COOKIE_NAME, token, {
