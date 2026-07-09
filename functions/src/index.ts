@@ -7,7 +7,7 @@ admin.initializeApp();
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
-const MAX_REFRESHES_PER_HOUR = 3;
+const MAX_REFRESHES_PER_HOUR = 50;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 interface TokenPayload {
@@ -41,7 +41,6 @@ export const handleVisitorSession = functions.https.onRequest(
       let timestamps: number[] = [];
       let existingToken: string | undefined;
 
-      // 1. Extract standard Bearer Token from headers
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith("Bearer ")) {
         existingToken = authHeader.split(" ")[1];
@@ -49,28 +48,23 @@ export const handleVisitorSession = functions.https.onRequest(
 
       const now = Date.now();
 
-      // 2. Decode token and unpack sliding window telemetry
       if (existingToken) {
         try {
           const decoded = jwt.verify(existingToken, JWT_SECRET) as TokenPayload;
           visitorId = decoded.visitorId;
 
-          // Filter out timestamps older than 1 hour (Sliding Window Core Logic)
           timestamps = (decoded.timestamps || []).filter(
             (ts) => now - ts < ONE_HOUR_MS,
           );
         } catch (err) {
-          // Bad or expired token -> Initialize brand new session
           visitorId = randomUUID();
           timestamps = [];
         }
       } else {
-        // No token -> Initialize brand new session
         visitorId = randomUUID();
         timestamps = [];
       }
 
-      // 3. Evaluate Rate Limit Threshold
       if (timestamps.length >= MAX_REFRESHES_PER_HOUR) {
         res.status(429).json({
           error: "Too Many Requests",
@@ -79,10 +73,8 @@ export const handleVisitorSession = functions.https.onRequest(
         return;
       }
 
-      // 4. Log the current valid access event into the array
       timestamps.push(now);
 
-      // 5. Pack data back into a refreshed Bearer Token string
       const token = jwt.sign({ visitorId, timestamps }, JWT_SECRET, {
         expiresIn: "7d",
       });
