@@ -14,7 +14,7 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      # Step 2: Set up the Node.js environment (FIXED: Added proper list item syntax)
+      # Step 2: Set up the Node.js environment
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -32,12 +32,17 @@ jobs:
           fi
         working-directory: functions
 
-      # Step 4: Compile TypeScript to JavaScript
+      # NEW Step 4: Automatically clear out editor spacing discrepancies
+      - name: Auto-fix Code Style Spacing
+        run: npm run lint:fix
+        working-directory: functions
+
+      # Step 5: Compile TypeScript to JavaScript
       - name: Build TypeScript
         run: npm run build
         working-directory: functions
 
-      # Step 5: Native Deployment using your verified Repository Secret
+      # Step 6: Native Deployment using your verified Repository Secret
       - name: Deploy to Firebase
         run: |
           # 1. Install official Firebase tools cleanly on the runner
@@ -45,5 +50,3 @@ jobs:
 
           # 2. Deploy utilizing the verified token string and force cleanup of stale cloud functions
           firebase deploy --only functions --token "${{ secrets.FIREBASE_TOKEN }}" --project house-proj-fff2a --force
-
-    #Testing if new actions is running
