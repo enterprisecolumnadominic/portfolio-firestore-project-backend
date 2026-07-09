@@ -45,3 +45,5 @@ jobs:
 
           # 2. Deploy utilizing the verified token string and force cleanup of stale cloud functions
           firebase deploy --only functions --token "${{ secrets.FIREBASE_TOKEN }}" --project house-proj-fff2a --force
+
+    #Testing if new actions is running
