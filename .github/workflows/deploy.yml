@@ -14,11 +14,10 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      # Step 2: Set up the Node.js environment
-      - name: Setup Node.js
+      # Step 2: Set up the Node.js environment (Updated to Node 22 to prevent runner deprecation)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: './functions/package-lock.json'
 
@@ -43,5 +42,5 @@ jobs:
           # 1. Install official Firebase tools cleanly on the runner
           npm install -g firebase-tools
           
-          # 2. Deploy directly utilizing the verified token string
-          firebase deploy --only functions --token "${{ secrets.FIREBASE_TOKEN }}" --project house-proj-fff2a
+          # 2. Deploy utilizing the verified token string and force cleanup of stale cloud functions
+          firebase deploy --only functions --token "${{ secrets.FIREBASE_TOKEN }}" --project house-proj-fff2a --force
