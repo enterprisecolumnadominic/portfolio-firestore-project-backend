@@ -1,14 +1,12 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 
 admin.initializeApp();
-const db = admin.firestore();
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
-const COOKIE_NAME = "visitor_auth";
-const MAX_REFRESHES = 100;
 
 export const handleVisitorSession = functions.https.onRequest(
   async (req, res) => {
@@ -24,6 +22,7 @@ export const handleVisitorSession = functions.https.onRequest(
       res.set("Access-Control-Allow-Origin", origin);
     }
 
+    // Adjusting CORS headers to allow standard Authorization Bearer headers
     res.set("Access-Control-Allow-Credentials", "true");
 
     if (req.method === "OPTIONS") {
@@ -35,14 +34,15 @@ export const handleVisitorSession = functions.https.onRequest(
 
     try {
       let visitorId: string;
-      let currentRefreshes = 0;
+      let existingToken: string | undefined;
 
-      const cookiesRaw = req.headers.cookie || "";
-      const parsedCookies = Object.fromEntries(
-        cookiesRaw.split("; ").map((c) => c.split("=")),
-      );
-      const existingToken = parsedCookies[COOKIE_NAME];
+      // 1. Extract the token from the "Authorization: Bearer <token>" header
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        existingToken = authHeader.split(" ")[1];
+      }
 
+      // 2. Verify or Generate the identity statelessly
       if (existingToken) {
         try {
           // eslint-disable-next-line object-curly-spacing
@@ -51,69 +51,23 @@ export const handleVisitorSession = functions.https.onRequest(
           };
           visitorId = decoded.visitorId;
         } catch (err) {
-          visitorId = admin.firestore().collection("visitors").doc().id;
+          // Token is expired or invalid -> Issue a fresh one
+          visitorId = randomUUID();
         }
       } else {
-        visitorId = admin.firestore().collection("visitors").doc().id;
+        // No Bearer token provided -> Brand new visitor
+        visitorId = randomUUID();
       }
 
-      const rateLimitRef = db.collection("visitor_rate_limits").doc(visitorId);
-
-      await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(rateLimitRef);
-        const now = Date.now();
-
-        if (!doc.exists) {
-          transaction.set(rateLimitRef, {
-            count: 1,
-            createdAt: now,
-            lastRefreshedAt: now,
-          });
-          currentRefreshes = 1;
-        } else {
-          const data = doc.data();
-          if (data) {
-            const dayInMs = 24 * 60 * 60 * 1000;
-            if (now - data.createdAt > dayInMs) {
-              transaction.update(rateLimitRef, {
-                count: 1,
-                createdAt: now,
-                lastRefreshedAt: now,
-              });
-              currentRefreshes = 1;
-            } else {
-              currentRefreshes = data.count + 1;
-              transaction.update(rateLimitRef, {
-                count: currentRefreshes,
-                lastRefreshedAt: now,
-              });
-            }
-          }
-        }
-      });
-
-      if (currentRefreshes > MAX_REFRESHES) {
-        res.status(429).json({
-          error: "Too many requests.",
-          message: "Refresh allowance capped at 100.",
-        });
-        return;
-      }
-
+      // 3. Sign a fresh token
       // eslint-disable-next-line object-curly-spacing
       const token = jwt.sign({ visitorId }, JWT_SECRET, { expiresIn: "7d" });
 
-      res.cookie(COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "none",
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
+      // 4. Return the token directly in the JSON response payload
       res.status(200).json({
         status: "authenticated",
         visitorId,
-        refreshesRemaining: Math.max(0, MAX_REFRESHES - currentRefreshes),
+        token, // Your frontend will grab this token string and save it
       });
     } catch (error) {
       console.error("Security pipeline crash:", error);
