@@ -7,7 +7,7 @@ admin.initializeApp();
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
-const MAX_REFRESHES_PER_HOUR = 50;
+const MAX_REFRESHES_PER_HOUR = 20;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
 interface TokenPayload {
