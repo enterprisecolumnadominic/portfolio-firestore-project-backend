@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as jwt from "jsonwebtoken";
-import { randomUUID } from "crypto";
-import { applyCors } from "../utils/cors";
+import {randomUUID} from "crypto";
+import {applyCors} from "../utils/cors";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
@@ -57,7 +57,7 @@ export const handleVisitorSession = functions.https.onRequest(
 
       timestamps.push(now);
 
-      const token = jwt.sign({ visitorId, timestamps }, JWT_SECRET, {
+      const token = jwt.sign({visitorId, timestamps}, JWT_SECRET, {
         expiresIn: "7d",
       });
 

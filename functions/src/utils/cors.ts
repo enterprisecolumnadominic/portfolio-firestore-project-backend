@@ -1,5 +1,5 @@
 import * as functions from "firebase-functions";
-import { Response } from "express"; // Import the clean Express type directly
+import {Response} from "express";
 
 const ALLOWED_ORIGINS = [
   "http://localhost:4000",
@@ -7,6 +7,12 @@ const ALLOWED_ORIGINS = [
   "https://profile-dominiccolumna.web.app",
 ];
 
+/**
+ * Handles CORS configurations and preflight requests.
+ * @param {functions.https.Request} req - Incoming Firebase HTTPS request.
+ * @param {Response} res - Express response object used to set headers.
+ * @return {boolean} True if OPTIONS preflight request, false otherwise.
+ */
 export function applyCors(
   req: functions.https.Request,
   res: Response,
@@ -21,8 +27,8 @@ export function applyCors(
     res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.status(204).send("");
-    return true; // Handled the preflight request
+    return true;
   }
 
-  return false; // Not an OPTIONS request, proceed with execution
+  return false;
 }
