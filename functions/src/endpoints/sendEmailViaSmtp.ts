@@ -19,19 +19,18 @@ interface EmailRequestBody {
   message: string;
 }
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.SMTP_EMAIL || "enterprise.columna.dominic@gmail.com",
-    pass: process.env.SMTP_PASSWORD || "whgyhpetbzoilazu",
-  },
-});
-
 export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
-  // One line handles all CORS and Preflight checks cleanly!
   if (applyCors(req, res)) return;
 
   try {
+    // 1. Runtime config validation guard
+    const senderEmail = process.env.SMTP_EMAIL;
+    const smtpPassword = process.env.SMTP_PASSWORD;
+
+    if (!senderEmail || !smtpPassword) {
+      throw new Error("Missing cloud environment SMTP configurations.");
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res
@@ -76,15 +75,19 @@ export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    // 4. Fire the email out through Gmail SMTP
-    const senderEmail =
-      process.env.SMTP_EMAIL || "enterprise.columna.dominic@gmail.com";
-    const targetEmail =
-      process.env.SMTP_EMAIL || "enterprise.columna.dominic@gmail.com";
+    // 2. Initialize Nodemailer inside the handler with fresh variables
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: senderEmail,
+        pass: smtpPassword,
+      },
+    });
 
+    // 3. Dispatch out through verified dynamic configuration
     await transporter.sendMail({
       from: `"Portfolio Contact Form" <${senderEmail}>`,
-      to: targetEmail, // Sends the message straight to your inbox
+      to: senderEmail, // Sends the message straight to your inbox
       replyTo: email,
       subject: `New Message from ${name} via Portfolio`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
