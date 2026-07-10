@@ -1,7 +1,7 @@
-import * as functions from "firebase-functions";
+import { onRequest } from "firebase-functions/v2/https";
 import * as jwt from "jsonwebtoken";
 import * as nodemailer from "nodemailer";
-import {applyCors} from "../utils/cors";
+import { applyCors } from "../utils/cors";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
@@ -19,12 +19,12 @@ interface EmailRequestBody {
   message: string;
 }
 
-export const sendEmailViaSmtp = functions.runWith({
-  secrets: ["SMTP_EMAIL", "SMTP_PASSWORD"],
-}).https.onRequest(async (req, res) => {
-  if (applyCors(req, res)) return;
+export const sendEmailViaSmtp = onRequest(
+  { secrets: ["SMTP_EMAIL", "SMTP_PASSWORD"] },
+  async (req, res) => {
+    if (applyCors(req, res)) return;
 
-  try {
+    try {
     // 1. Runtime config validation guard
     const senderEmail = process.env.SMTP_EMAIL;
     const smtpPassword = process.env.SMTP_PASSWORD;
