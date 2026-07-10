@@ -19,7 +19,9 @@ interface EmailRequestBody {
   message: string;
 }
 
-export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
+export const sendEmailViaSmtp = functions.runWith({
+  secrets: ["SMTP_EMAIL", "SMTP_PASSWORD"],
+}).https.onRequest(async (req, res) => {
   if (applyCors(req, res)) return;
 
   try {
