@@ -1,7 +1,7 @@
 import * as functions from "firebase-functions";
 import * as jwt from "jsonwebtoken";
 import * as nodemailer from "nodemailer";
-import {applyCors} from "../utils/cors";
+import { applyCors } from "../utils/cors";
 
 const JWT_SECRET =
   process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
@@ -36,7 +36,7 @@ export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       res
         .status(401)
-        .json({error: "Unauthorized", message: "Missing tracking token."});
+        .json({ error: "Unauthorized", message: "Missing tracking token." });
       return;
     }
 
@@ -67,7 +67,7 @@ export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
-    const {name, email, message} = req.body as EmailRequestBody;
+    const { name, email, message } = req.body as EmailRequestBody;
     if (!name || !email || !message) {
       res.status(400).json({
         error: "Bad Request",
@@ -76,9 +76,11 @@ export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
       return;
     }
 
+    // Look inside your sendEmailViaSmtp endpoint block for this section:
     await transporter.sendMail({
-      from: `"Portfolio Contact Form" <${process.env.SMTP_EMAIL}>`,
-      to: process.env.SMTP_EMAIL,
+      // Fallback cleanly to your target email address string if env variables are empty
+      from: `"Portfolio Contact Form" <${process.env.SMTP_EMAIL || "enterprise.columna.dominic@gmail.com"}>`,
+      to: process.env.SMTP_EMAIL || "enterprise.columna.dominic@gmail.com", // This sends the message straight to your inbox!
       replyTo: email,
       subject: `New Message from ${name} via Portfolio`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
@@ -86,9 +88,9 @@ export const sendEmailViaSmtp = functions.https.onRequest(async (req, res) => {
 
     emailTimestamps.push(now);
     const updatedToken = jwt.sign(
-      {visitorId: decoded.visitorId, timestamps: emailTimestamps},
+      { visitorId: decoded.visitorId, timestamps: emailTimestamps },
       JWT_SECRET,
-      {expiresIn: "7d"},
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({
