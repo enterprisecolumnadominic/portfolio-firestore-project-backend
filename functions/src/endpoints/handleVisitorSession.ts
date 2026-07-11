@@ -1,10 +1,11 @@
-import { onRequest } from "firebase-functions/v2/https";
+import {onRequest} from "firebase-functions/v2/https";
 import * as jwt from "jsonwebtoken";
-import { randomUUID } from "crypto";
-import { Request, Response } from "express";
-import { applyCorsMiddleware } from "../utils/cors";
+import {randomUUID} from "crypto";
+import {Request, Response} from "express";
+import {applyCorsMiddleware} from "../utils/cors";
 
-const JWT_SECRET = process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
 const MAX_REFRESHES_PER_HOUR = 20;
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -15,11 +16,10 @@ interface TokenPayload {
 
 export const handleVisitorSession = onRequest(
   async (req: Request, res: Response) => {
-    
     // 1. Execute our clean, separate official CORS middleware handler
     await applyCorsMiddleware(req, res);
-    
-    // Stop processing if this was an OPTIONS preflight request handled by middleware
+
+    // Stop processing if this was an OPTIONS preflight request
     if (req.method === "OPTIONS") return;
 
     try {
@@ -35,7 +35,7 @@ export const handleVisitorSession = onRequest(
 
       const now = Date.now();
 
-      // 3. Handle existing token validation or issue a fresh visitor identity
+      // 3. Handle existing token validation or issue a fresh identity
       if (existingToken) {
         try {
           const decoded = jwt.verify(existingToken, JWT_SECRET) as TokenPayload;
@@ -60,7 +60,9 @@ export const handleVisitorSession = onRequest(
       if (timestamps.length >= MAX_REFRESHES_PER_HOUR) {
         res.status(429).json({
           error: "Too Many Requests",
-          message: `Rate limit exceeded. Capped at ${MAX_REFRESHES_PER_HOUR} requests per hour.`,
+          message:
+            "Rate limit exceeded. Capped at " +
+            `${MAX_REFRESHES_PER_HOUR} requests per hour.`,
         });
         return;
       }
@@ -68,7 +70,7 @@ export const handleVisitorSession = onRequest(
       // 5. Commit timestamp and sign a fresh token state
       timestamps.push(now);
 
-      const token = jwt.sign({ visitorId, timestamps }, JWT_SECRET, {
+      const token = jwt.sign({visitorId, timestamps}, JWT_SECRET, {
         expiresIn: "7d",
       });
 

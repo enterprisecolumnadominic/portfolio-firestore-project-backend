@@ -1,5 +1,5 @@
 import cors from "cors";
-import { Request, Response } from "express";
+import {Request, Response} from "express";
 
 const ALLOWED_ORIGINS = [
   "http://localhost:4000",
@@ -10,7 +10,8 @@ const ALLOWED_ORIGINS = [
 // Configure the official cors handler package instance
 const corsHandler = cors({
   origin: (origin, callback) => {
-    // Allow requests with no origin (like server-to-server or curl) or matching portfolio domains
+    // Allow requests with no origin (like server-to-server or curl)
+    // or matching portfolio domains
     if (!origin || ALLOWED_ORIGINS.includes(origin)) {
       callback(null, true);
     } else {
@@ -22,8 +23,16 @@ const corsHandler = cors({
   allowedHeaders: ["Content-Type", "Authorization"],
 });
 
-
-export function applyCorsMiddleware(req: Request, res: Response): Promise<void> {
+/**
+ * Express middleware wrapper to apply standard CORS configurations.
+ * @param {Request} req - The incoming Express request object.
+ * @param {Response} res - The outgoing Express response object.
+ * @return {Promise<void>} Resolves when the CORS processing finishes.
+ */
+export function applyCorsMiddleware(
+  req: Request,
+  res: Response
+): Promise<void> {
   return new Promise((resolve) => {
     corsHandler(req, res, () => {
       resolve();
