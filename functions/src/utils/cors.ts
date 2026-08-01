@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 import cors from "cors";
 import {Request, Response} from "express";
+=======
+import { Request, Response } from "express";
+>>>>>>> 11a332a (updated the function to v2 and improve api calls)
 
 const ALLOWED_ORIGINS = [
   "http://localhost:4000",
@@ -24,6 +28,7 @@ const corsHandler = cors({
 });
 
 /**
+<<<<<<< HEAD
  * Express middleware wrapper to apply standard CORS configurations.
  * @param {Request} req - The incoming Express request object.
  * @param {Response} res - The outgoing Express response object.
@@ -38,4 +43,28 @@ export function applyCorsMiddleware(
       resolve();
     });
   });
+=======
+ * Handles CORS configurations and preflight OPTIONS requests.
+ *
+ * @param req - Incoming Express Request object from Firebase v2 HTTP trigger
+ * @param res - Express Response object used to set headers
+ * @returns boolean - True if request was an OPTIONS preflight, false otherwise
+ */
+export function applyCors(req: Request, res: Response): boolean {
+  const origin = req.headers.origin;
+
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.set("Access-Control-Allow-Origin", origin);
+  }
+  res.set("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.status(204).send("");
+    return true;
+  }
+
+  return false;
+>>>>>>> 11a332a (updated the function to v2 and improve api calls)
 }
