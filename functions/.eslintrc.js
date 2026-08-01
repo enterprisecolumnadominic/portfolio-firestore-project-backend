@@ -15,19 +15,23 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: {
     project: ["tsconfig.json", "tsconfig.dev.json"],
+    tsconfigRootDir: __dirname,
     sourceType: "module",
   },
   ignorePatterns: [
     "/lib/**/*", // Ignore built files.
     "/generated/**/*", // Ignore generated files.
   ],
-  plugins: [
-    "@typescript-eslint",
-    "import",
-  ],
+  plugins: ["@typescript-eslint", "import"],
   rules: {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
     "indent": ["error", 2],
+    "linebreak-style": 0,
+    // 💡 Disable JSDoc type requirements since TypeScript handles typing
+    "valid-jsdoc": 0,
+    "require-jsdoc": 0,
+    // 💡 Allow lines up to 100 characters and ignore comments for line length
+    "max-len": ["error", {code: 100, ignoreComments: true}],
   },
 };
