@@ -1,11 +1,10 @@
-import {onRequest} from "firebase-functions/v2/https";
+import { onRequest } from "firebase-functions/v2/https";
 import * as jwt from "jsonwebtoken";
-import {randomUUID} from "crypto";
-import {applyCors} from "../utils/cors";
-import {TokenPayload} from "../types/auth";
+import { randomUUID } from "crypto";
+import { applyCors } from "../utils/cors";
+import { TokenPayload } from "../types/auth";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
+const JWT_SECRET = process.env.JWT_SECRET;
 const MAX_REFRESHES_PER_HOUR = 20; // Allow 20 page refreshes per hour
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -64,9 +63,9 @@ export const handleVisitorSession = onRequest(async (req, res) => {
 
     // 3. Issue updated JWT containing both independent arrays
     const token = jwt.sign(
-      {visitorId, sessionTimestamps, emailTimestamps},
+      { visitorId, sessionTimestamps, emailTimestamps },
       JWT_SECRET,
-      {expiresIn: "7d"},
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({

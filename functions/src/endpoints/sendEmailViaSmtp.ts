@@ -1,11 +1,10 @@
-import {onRequest} from "firebase-functions/v2/https";
+import { onRequest } from "firebase-functions/v2/https";
 import * as jwt from "jsonwebtoken";
 import * as nodemailer from "nodemailer";
-import {applyCors} from "../utils/cors";
-import {TokenPayload} from "../types/auth";
+import { applyCors } from "../utils/cors";
+import { TokenPayload } from "../types/auth";
 
-const JWT_SECRET =
-  process.env.JWT_SECRET || "fallback-local-dev-secret-key-12345";
+const JWT_SECRET = process.env.JWT_SECRET;
 const MAX_EMAILS_PER_HOUR = 3; // Strict limit: max 3 emails per hour
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
@@ -16,7 +15,7 @@ interface EmailRequestBody {
 }
 
 export const sendEmailViaSmtp = onRequest(
-  {secrets: ["SMTP_EMAIL", "SMTP_PASSWORD"]},
+  { secrets: ["SMTP_EMAIL", "SMTP_PASSWORD"] },
   async (req, res) => {
     if (applyCors(req, res)) return;
 
@@ -33,7 +32,7 @@ export const sendEmailViaSmtp = onRequest(
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         res
           .status(401)
-          .json({error: "Unauthorized", message: "Missing session token."});
+          .json({ error: "Unauthorized", message: "Missing session token." });
         return;
       }
 
@@ -66,7 +65,7 @@ export const sendEmailViaSmtp = onRequest(
       }
 
       // 3. Validate form inputs
-      const {name, email, message} = req.body as EmailRequestBody;
+      const { name, email, message } = req.body as EmailRequestBody;
       if (!name || !email || !message) {
         res.status(400).json({
           error: "Bad Request",
@@ -78,7 +77,7 @@ export const sendEmailViaSmtp = onRequest(
       // 4. Send email via SMTP
       const transporter = nodemailer.createTransport({
         service: "gmail",
-        auth: {user: senderEmail, pass: smtpPassword},
+        auth: { user: senderEmail, pass: smtpPassword },
       });
 
       await transporter.sendMail({
@@ -99,7 +98,7 @@ export const sendEmailViaSmtp = onRequest(
           emailTimestamps,
         },
         JWT_SECRET,
-        {expiresIn: "7d"},
+        { expiresIn: "7d" },
       );
 
       res.status(200).json({
