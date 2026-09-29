@@ -1,84 +1,96 @@
 import { onRequest } from "firebase-functions/v2/https";
+import { defineSecret } from "firebase-functions/params";
 import * as jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 import { applyCors } from "../utils/cors";
 import { TokenPayload } from "../types/auth";
 
-const JWT_SECRET = process.env.JWT_SECRET;
+// 1. Define the secret key parameter via Firebase Secret Manager
+const jwtSecret = defineSecret("JWT_SECRET");
+
 const MAX_REFRESHES_PER_HOUR = 20; // Allow 20 page refreshes per hour
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
-export const handleVisitorSession = onRequest(async (req, res) => {
-  // 1. Preflight CORS check
-  if (applyCors(req, res)) return;
+// 2. Attach the secret to the Cloud Function options
+export const handleVisitorSession = onRequest(
+  { secrets: [jwtSecret] },
+  async (req, res) => {
+    // Preflight CORS check
+    if (applyCors(req, res)) return;
 
-  try {
-    let visitorId: string;
-    let sessionTimestamps: number[] = [];
-    let emailTimestamps: number[] = [];
-    let existingToken: string | undefined;
+    try {
+      // 3. Access the secret value securely at runtime
+      const secretKey = jwtSecret.value();
 
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      existingToken = authHeader.split(" ")[1];
-    }
+      let visitorId: string;
+      let sessionTimestamps: number[] = [];
+      let emailTimestamps: number[] = [];
+      let existingToken: string | undefined;
 
-    const now = Date.now();
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        existingToken = authHeader.split(" ")[1];
+      }
 
-    if (existingToken) {
-      try {
-        const decoded = jwt.verify(existingToken, JWT_SECRET) as TokenPayload;
-        visitorId = decoded.visitorId;
+      const now = Date.now();
 
-        // Keep email history untouched, filter out timestamps older than 1 hour
-        emailTimestamps = (decoded.emailTimestamps || []).filter(
-          (ts) => now - ts < ONE_HOUR_MS,
-        );
-        sessionTimestamps = (decoded.sessionTimestamps || []).filter(
-          (ts) => now - ts < ONE_HOUR_MS,
-        );
-      } catch (err) {
-        // Invalid or expired token -> create fresh session
+      if (existingToken) {
+        try {
+          // Verify token using the secret retrieved from Secret Manager
+          const decoded = jwt.verify(existingToken, secretKey) as TokenPayload;
+          visitorId = decoded.visitorId;
+
+          // Keep email history untouched, filter out timestamps older than 1 hour
+          emailTimestamps = (decoded.emailTimestamps || []).filter(
+            (ts) => now - ts < ONE_HOUR_MS,
+          );
+          sessionTimestamps = (decoded.sessionTimestamps || []).filter(
+            (ts) => now - ts < ONE_HOUR_MS,
+          );
+        } catch (err) {
+          // Invalid or expired token -> create fresh session
+          visitorId = randomUUID();
+          sessionTimestamps = [];
+          emailTimestamps = [];
+        }
+      } else {
         visitorId = randomUUID();
         sessionTimestamps = [];
         emailTimestamps = [];
       }
-    } else {
-      visitorId = randomUUID();
-      sessionTimestamps = [];
-      emailTimestamps = [];
-    }
 
-    // 2. Enforce session refresh rate limit
-    if (sessionTimestamps.length >= MAX_REFRESHES_PER_HOUR) {
-      res.status(429).json({
-        error: "Too Many Requests",
-        message: "Session refresh limit reached. Please try again in an hour.",
+      // Enforce session refresh rate limit
+      if (sessionTimestamps.length >= MAX_REFRESHES_PER_HOUR) {
+        res.status(429).json({
+          error: "Too Many Requests",
+          message:
+            "Session refresh limit reached. Please try again in an hour.",
+        });
+        return;
+      }
+
+      // Record this session refresh
+      sessionTimestamps.push(now);
+
+      // 4. Issue updated JWT signed with the secret key
+      const token = jwt.sign(
+        { visitorId, sessionTimestamps, emailTimestamps },
+        secretKey,
+        { expiresIn: "7d" },
+      );
+
+      res.status(200).json({
+        status: "authenticated",
+        visitorId,
+        token,
+        requestsRemainingInHour: Math.max(
+          0,
+          MAX_REFRESHES_PER_HOUR - sessionTimestamps.length,
+        ),
       });
-      return;
+    } catch (error) {
+      console.error("Session handler error:", error);
+      res.status(500).send("Internal server error.");
     }
-
-    // Record this session refresh
-    sessionTimestamps.push(now);
-
-    // 3. Issue updated JWT containing both independent arrays
-    const token = jwt.sign(
-      { visitorId, sessionTimestamps, emailTimestamps },
-      JWT_SECRET,
-      { expiresIn: "7d" },
-    );
-
-    res.status(200).json({
-      status: "authenticated",
-      visitorId,
-      token,
-      requestsRemainingInHour: Math.max(
-        0,
-        MAX_REFRESHES_PER_HOUR - sessionTimestamps.length,
-      ),
-    });
-  } catch (error) {
-    console.error("Session handler error:", error);
-    res.status(500).send("Internal server error.");
-  }
-});
+  },
+);
