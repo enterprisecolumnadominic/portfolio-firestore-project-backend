@@ -3,23 +3,44 @@ import { defineSecret } from "firebase-functions/params";
 import * as jwt from "jsonwebtoken";
 import { randomUUID } from "crypto";
 import { applyCors } from "../utils/cors";
+import { validateRecaptcha, recaptchaSecret } from "../utils/validateRecaptcha";
 import { TokenPayload } from "../types/auth";
 
-// 1. Define the secret key parameter via Firebase Secret Manager
+// 1. Define the secret key parameters via Firebase Secret Manager
 const jwtSecret = defineSecret("JWT_SECRET");
 
 const MAX_REFRESHES_PER_HOUR = 20; // Allow 20 page refreshes per hour
 const ONE_HOUR_MS = 60 * 60 * 1000;
 
-// 2. Attach the secret to the Cloud Function options
+// 2. Attach all required secrets to the Cloud Function options
 export const handleVisitorSession = onRequest(
-  { secrets: [jwtSecret] },
+  { secrets: [jwtSecret, recaptchaSecret] },
   async (req, res) => {
     // Preflight CORS check
     if (applyCors(req, res)) return;
 
     try {
-      // 3. Access the secret value securely at runtime
+      // 3. Validate reCAPTCHA token from request body before doing anything else
+      const recaptchaToken = req.body?.recaptchaToken;
+      if (!recaptchaToken) {
+        res.status(403).json({
+          error: "Forbidden",
+          message: "Missing reCAPTCHA token.",
+        });
+        return;
+      }
+
+      const isHuman = await validateRecaptcha(recaptchaToken);
+      if (!isHuman) {
+        res.status(403).json({
+          error: "Forbidden",
+          message:
+            "reCAPTCHA verification failed. Request rejected as potential bot traffic.",
+        });
+        return;
+      }
+
+      // 4. Access the JWT secret value securely at runtime
       const secretKey = jwtSecret.value();
 
       let visitorId: string;
@@ -72,7 +93,7 @@ export const handleVisitorSession = onRequest(
       // Record this session refresh
       sessionTimestamps.push(now);
 
-      // 4. Issue updated JWT signed with the secret key
+      // 5. Issue updated JWT signed with the secret key
       const token = jwt.sign(
         { visitorId, sessionTimestamps, emailTimestamps },
         secretKey,
