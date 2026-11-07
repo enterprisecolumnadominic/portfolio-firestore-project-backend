@@ -1,2 +1,5 @@
-This is the first commit to the firestore
-Writing  to see CI\CD works
+This is the serverless backend for a personal developer portfolio site, built on Firebase Cloud Functions v2 and written in TypeScript. It exposes two HTTPS endpoints: one that issues and refreshes anonymous visitor sessions, and one that handles contact form submissions by forwarding them to the portfolio owner via Gmail SMTP. Both are protected by JWTs signed with a secret stored in Firebase Secret Manager.
+
+The backend uses a stateless rate-limiting approach — no database writes required. Instead of storing counters in Firestore, each JWT carries a rolling array of Unix timestamps for session refreshes and email sends. On every request, timestamps older than one hour are discarded, and the updated list is re-signed into a fresh token returned to the client. This keeps the functions lightweight and free of read/write overhead.
+
+Firestore is included in the project for portfolio content that the Vue frontend reads directly, with composite indexes defined for the ContentPosts, Employees, and Properties collections. All credentials — JWT signing key, SMTP email, and SMTP password — are managed exclusively through Firebase Secret Manager and never hardcoded anywhere in the codebase.
