@@ -1,4 +1,4 @@
-import { defineSecret } from "firebase-functions/params";
+import {defineSecret} from "firebase-functions/params";
 
 interface GoogleRecaptchaResponse {
   success: boolean;
@@ -31,7 +31,7 @@ export async function validateRecaptcha(token: string): Promise<boolean> {
       "https://www.google.com/recaptcha/api/siteverify",
       {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
         body: new URLSearchParams({
           secret: secretKey,
           response: token,

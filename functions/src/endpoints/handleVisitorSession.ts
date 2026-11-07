@@ -1,117 +1,81 @@
-import { onRequest } from "firebase-functions/v2/https";
-import { defineSecret } from "firebase-functions/params";
+import {onRequest} from "firebase-functions/v2/https";
+import {defineSecret} from "firebase-functions/params";
 import * as jwt from "jsonwebtoken";
-import { randomUUID } from "crypto";
-import { applyCors } from "../utils/cors";
-import { validateRecaptcha, recaptchaSecret } from "../utils/validateRecaptcha";
-import { TokenPayload } from "../types/auth";
+import * as crypto from "crypto";
 
-// 1. Define the secret key parameters via Firebase Secret Manager
 const jwtSecret = defineSecret("JWT_SECRET");
 
-const MAX_REFRESHES_PER_HOUR = 20; // Allow 20 page refreshes per hour
-const ONE_HOUR_MS = 60 * 60 * 1000;
+const MAX_REQUESTS = 20;
 
-// 2. Attach all required secrets to the Cloud Function options
 export const handleVisitorSession = onRequest(
-  { secrets: [jwtSecret, recaptchaSecret] },
+  {secrets: [jwtSecret]},
   async (req, res) => {
-    // Preflight CORS check
-    if (applyCors(req, res)) return;
-
-    try {
-      // 3. Validate reCAPTCHA token from request body before doing anything else
-      const recaptchaToken = req.body?.recaptchaToken;
-      if (!recaptchaToken) {
-        res.status(403).json({
-          error: "Forbidden",
-          message: "Missing reCAPTCHA token.",
-        });
-        return;
-      }
-
-      const isHuman = await validateRecaptcha(recaptchaToken);
-      if (!isHuman) {
-        res.status(403).json({
-          error: "Forbidden",
-          message:
-            "reCAPTCHA verification failed. Request rejected as potential bot traffic.",
-        });
-        return;
-      }
-
-      // 4. Access the JWT secret value securely at runtime
-      const secretKey = jwtSecret.value();
-
-      let visitorId: string;
-      let sessionTimestamps: number[] = [];
-      let emailTimestamps: number[] = [];
-      let existingToken: string | undefined;
-
-      const authHeader = req.headers.authorization;
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        existingToken = authHeader.split(" ")[1];
-      }
-
-      const now = Date.now();
-
-      if (existingToken) {
-        try {
-          // Verify token using the secret retrieved from Secret Manager
-          const decoded = jwt.verify(existingToken, secretKey) as TokenPayload;
-          visitorId = decoded.visitorId;
-
-          // Keep email history untouched, filter out timestamps older than 1 hour
-          emailTimestamps = (decoded.emailTimestamps || []).filter(
-            (ts) => now - ts < ONE_HOUR_MS,
-          );
-          sessionTimestamps = (decoded.sessionTimestamps || []).filter(
-            (ts) => now - ts < ONE_HOUR_MS,
-          );
-        } catch (err) {
-          // Invalid or expired token -> create fresh session
-          visitorId = randomUUID();
-          sessionTimestamps = [];
-          emailTimestamps = [];
-        }
-      } else {
-        visitorId = randomUUID();
-        sessionTimestamps = [];
-        emailTimestamps = [];
-      }
-
-      // Enforce session refresh rate limit
-      if (sessionTimestamps.length >= MAX_REFRESHES_PER_HOUR) {
-        res.status(429).json({
-          error: "Too Many Requests",
-          message:
-            "Session refresh limit reached. Please try again in an hour.",
-        });
-        return;
-      }
-
-      // Record this session refresh
-      sessionTimestamps.push(now);
-
-      // 5. Issue updated JWT signed with the secret key
-      const token = jwt.sign(
-        { visitorId, sessionTimestamps, emailTimestamps },
-        secretKey,
-        { expiresIn: "7d" },
-      );
-
-      res.status(200).json({
-        status: "authenticated",
-        visitorId,
-        token,
-        requestsRemainingInHour: Math.max(
-          0,
-          MAX_REFRESHES_PER_HOUR - sessionTimestamps.length,
-        ),
-      });
-    } catch (error) {
-      console.error("Session handler error:", error);
-      res.status(500).send("Internal server error.");
+    // 1. Handle CORS Preflight
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    if (req.method === "OPTIONS") {
+      res.status(204).send("");
+      return;
     }
-  },
+
+    const secretKey = jwtSecret.value();
+    const authHeader = req.headers.authorization;
+
+    // 2. If user already has a token, verify and increment the counter
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const existingToken = authHeader.split(" ")[1];
+      try {
+        const decoded: any = jwt.verify(existingToken, secretKey);
+
+        const usedRequests: number = decoded.usedRequests ?? 0;
+        const newUsedRequests = usedRequests + 1;
+        const remaining = MAX_REQUESTS - newUsedRequests;
+
+        if (remaining < 0) {
+          res.status(429).json({success: false, error: "Rate limit exceeded"});
+          return;
+        }
+
+        // Re-sign a new token carrying the updated counter,
+        // preserving the original expiry by keeping the same createdAt
+        const updatedToken = jwt.sign(
+          {
+            visitorId: decoded.visitorId,
+            createdAt: decoded.createdAt,
+            usedRequests: newUsedRequests,
+            emailsSent: decoded.emailsSent ?? 0,
+            emailWindowStart: decoded.emailWindowStart,
+          },
+          secretKey,
+          {expiresIn: "1h"}
+        );
+
+        res.status(200).json({
+          message: "Session verified",
+          token: updatedToken, // ← client must save this new token
+          requestsRemainingInHour: remaining,
+        });
+        return;
+      } catch (err) {
+        // Token expired/invalid, fall through to issue a fresh one
+      }
+    }
+
+    // 3. Issue a new visitor token with counter starting at 0
+    const newToken = jwt.sign(
+      {
+        visitorId: crypto.randomUUID(),
+        createdAt: Date.now(),
+        usedRequests: 0,
+      },
+      secretKey,
+      {expiresIn: "1h"}
+    );
+
+    res.status(200).json({
+      message: "New session created",
+      token: newToken,
+      requestsRemainingInHour: MAX_REQUESTS,
+    });
+  }
 );
